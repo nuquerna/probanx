@@ -6,14 +6,9 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import styles from './page.module.scss';
 import { LanguageContext } from '../context/languageContext';
 import { RuleObject } from 'antd/es/form';
-import axios from 'axios';
-
-
-const { Search } = Input;
+import { validateIban } from '@/app/actions'
 
 type Payer = { iban: string, id: string, balance: number }
-
-const IBAN_VALIDATION = 'https://matavi.eu/validate?iban=';
 
 interface IFormInput {
     amount: number;
@@ -47,7 +42,7 @@ const onChange = (value: string | number | null) => {
 
 const Transfer: React.FC = () => {
     const language = useContext(LanguageContext);
-    console.log(language);
+
     const { handleSubmit, control, formState: { errors }, reset } = useForm<IFormInput>({
         defaultValues: {
             amount: 0.01,
@@ -75,22 +70,6 @@ const Transfer: React.FC = () => {
         }
     }, []);
 
-    const validatePayeeAccount = async (rule: RuleObject, value: string, callback: (error?: string | undefined) => void) => {
-        const ibanRegex = /\b[A-Z]{2}[0-9]{2}(?:[ ]?[0-9]{4}){4}(?!(?:[ ]?[0-9]){3})(?:[ ]?[0-9]{1,2})?\b/;
-
-        if (value.length < 20 && !ibanRegex.test(value)) return 'Invalid IBAN';
-        try {
-            const response = await fetch(`https://matavi.eu/validate?iban=${value}`);
-            const data = await response.json();
-            if (!data.valid) {
-                return 'Invalid IBAN';
-            }
-        } catch (error) {
-            console.error('Error validating IBAN:', error);
-        }
-        return undefined; // Return undefined if validation passes
-    };
-
     const invalidAccount = useMemo(() => !activeAccount || activeAccount?.balance < 0.1, [activeAccount]);
 
     return (
@@ -112,7 +91,11 @@ const Transfer: React.FC = () => {
                     <Input />
                 </Form.Item>
                 <Form.Item hasFeedback label="Payee Account" name="payeeAccount" rules={[{
-                    required: true, validator: validatePayeeAccount,
+                    required: true, validator: (_rule, value, cb) => {
+                        if (!value) cb("IBAN is a mandatory field");
+                        if (value.length < 15) cb("IBAN should not be less than 15 symbols");
+                        validateIban(value).then((data) => data ? cb(data) : cb());
+                    },
                 }]}>
                     <Input />
                 </Form.Item>
