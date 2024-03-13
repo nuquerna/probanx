@@ -1,89 +1,40 @@
-"use client"
+import { Descriptions, DescriptionsProps } from "antd";
+import styles from "./page.module.css";
 
-import React, { useState } from 'react';
-import {
-  DesktopOutlined,
-  GlobalOutlined,
-} from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Breadcrumb, Layout, Menu, theme } from 'antd';
-
-const { Header, Content, Footer, Sider } = Layout;
-
-type MenuItem = Required<MenuProps>['items'][number];
-
-function getItem(
-  label: React.ReactNode,
-  key: React.Key,
-  icon?: React.ReactNode,
-  children?: MenuItem[],
-): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label,
-  } as MenuItem;
-}
-
-const items: MenuItem[] = [
-  getItem('Option 2', '1', <DesktopOutlined />),
-  getItem('Language', 'lang', <GlobalOutlined />, [
-    getItem('LT', 'lt'),
-    getItem('EN', 'en'),
-  ]),
+const items: DescriptionsProps['items'] = [
+  {
+    key: '1',
+    label: 'UserName',
+    children: 'Zhou Maomao',
+  },
+  {
+    key: '2',
+    label: 'Telephone',
+    children: '1810000000',
+  },
+  {
+    key: '3',
+    label: 'Live',
+    children: 'Hangzhou, Zhejiang',
+  },
+  {
+    key: '4',
+    label: 'Remark',
+    children: 'empty',
+  },
+  {
+    key: '5',
+    label: 'Address',
+    children: 'No. 18, Wantang Road, Xihu District, Hangzhou, Zhejiang, China',
+  },
 ];
 
-
-const Home: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
-
+export default function Home() {
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
-        <div className="demo-logo-vertical" />
-        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={items} />
-      </Sider>
-      <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }} />
-        <Content style={{ margin: '0 16px' }}>
-          <Breadcrumb style={{ margin: '16px 0' }}>
-            <Breadcrumb.Item>User</Breadcrumb.Item>
-            <Breadcrumb.Item>Bill</Breadcrumb.Item>
-          </Breadcrumb>
-          <div
-            style={{
-              padding: 24,
-              minHeight: 360,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-            }}
-          >
-            Bill is a cat.
-          </div>
-        </Content>
-        <Footer style={{ textAlign: 'center' }}>
-          Ant Design ©{new Date().getFullYear()} Created by Ant UED
-        </Footer>
-      </Layout>
-    </Layout>
-
-
+    <main className={styles.main}>
+      <div className={styles.description}>
+        <Descriptions title="User Info" items={items} />
+      </div>
+    </main>
   );
-};
-
-export default Home;
-
-
-// const Home = () => (
-//   <main className={styles.main}>
-//     <div className={styles.description}>
-//       <Button type="primary">Button</Button>
-//     </div>
-
-//   </main>)
-
-// export default Home;
+}
