@@ -2,10 +2,9 @@
 
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Button, Form, Input, Select, Space, Flex, InputNumber, Alert } from 'antd';
-import { SubmitHandler, useForm } from "react-hook-form";
+import { SubmitHandler, useForm  } from "react-hook-form";
 import styles from './page.module.scss';
 import { LanguageContext } from '../context/languageContext';
-import { RuleObject } from 'antd/es/form';
 import { validateIban } from '@/app/actions'
 
 type Payer = { iban: string, id: string, balance: number }
@@ -36,22 +35,10 @@ const payerAccounts: Payer[] = [
     }
 ];
 
-const onChange = (value: string | number | null) => {
-    console.log('changed', value);
-};
-
 const Transfer: React.FC = () => {
     const language = useContext(LanguageContext);
 
-    const { handleSubmit, control, formState: { errors }, reset } = useForm<IFormInput>({
-        defaultValues: {
-            amount: 0.01,
-            payee: '',
-            payeeAccount: '',
-            purpose: '',
-            payerAccount: '',
-        }
-    });
+    const { handleSubmit, control, reset } = useForm<IFormInput>();
 
     const onSubmit: SubmitHandler<IFormInput> = (data) => console.log(data)
 
@@ -66,9 +53,23 @@ const Transfer: React.FC = () => {
         const payer = payerAccounts.find((p) => p.id === value)
         if (payer) {
             setActiveAccount(payer);
-            reset();
+            reset({
+                amount: 0.01,
+                payee: '',
+                payeeAccount: '',
+                purpose: '',
+                payerAccount: ''
+            });
         }
-    }, []);
+    }, [reset, setActiveAccount]);
+
+    const balance = useMemo(() => {
+        if (activeAccount) {
+            if (language === 'lt') return new Intl.NumberFormat('lt-LT').format(activeAccount.balance);
+            if (language === 'en') return new Intl.NumberFormat('en-US').format(activeAccount.balance);
+        }
+        return activeAccount?.balance;
+    }, [activeAccount, language]);
 
     const invalidAccount = useMemo(() => !activeAccount || activeAccount?.balance < 0.1, [activeAccount]);
 
@@ -76,6 +77,7 @@ const Transfer: React.FC = () => {
         <Flex gap="middle" vertical>
             <Space wrap>
                 <Select
+                    title='Choose Account'
                     style={{ width: 200 }}
                     onChange={setPayer}
                     options={payers}
@@ -83,9 +85,27 @@ const Transfer: React.FC = () => {
                 {invalidAccount ? <Alert message="There is no active account or Your balance is low" type="error" /> : null}
             </Space>
 
-            <Form className={styles.form} layout="vertical" onFinish={handleSubmit(onSubmit)} disabled={invalidAccount}>
+            <Form className={styles.form} layout="vertical" onFinish={handleSubmit(onSubmit)} disabled={invalidAccount} initialValues={{
+                amount: 0.01,
+                payee: '',
+                payeeAccount: '',
+                purpose: '',
+                payerAccount: ''
+            }}>
                 <Form.Item hasFeedback label="Amount" name="amount" rules={[{ required: true, type: 'number', min: 0.01, max: activeAccount?.balance }]}>
-                    <InputNumber type="number" />
+                    <InputNumber
+                        style={{ width: 200 }}
+                        defaultValue={0.01}
+                        parser={(value) => {
+                            if (!value) return 0.01;
+                            return language === 'lt' ? parseFloat(value.replace(',', '.')) : parseFloat(value.replace('.', ','));
+                        }}
+                        formatter={(value) => {
+                            if (value && language === 'lt') return new Intl.NumberFormat('lt-LT').format(value);
+                            if (value && language === 'en') return new Intl.NumberFormat('en-US').format(value);
+                            return '';
+                        }}
+                    />
                 </Form.Item>
                 <Form.Item hasFeedback label="Purpose" name="purpose" rules={[{ required: true, min: 3, max: 135 }]}>
                     <Input />
@@ -103,13 +123,13 @@ const Transfer: React.FC = () => {
                     <Input />
                 </Form.Item>
                 <Form.Item hasFeedback label="Payer Account">
-                    <Input placeholder="Payer" disabled value={activeAccount?.iban} addonAfter={activeAccount?.balance} />
+                    <Input size='large' placeholder="Payer" disabled value={activeAccount?.iban} addonAfter={balance} />
                 </Form.Item>
                 <Button type="primary" htmlType="submit">
                     Submit
                 </Button>
             </Form>
-        </Flex>
+        </Flex >
     );
 }
 
