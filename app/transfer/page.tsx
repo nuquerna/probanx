@@ -2,7 +2,7 @@
 
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Button, Form, Input, Select, Space, Flex, InputNumber, Alert } from 'antd';
-import { SubmitHandler, useForm  } from "react-hook-form";
+import { SubmitHandler, useForm, Controller } from "react-hook-form";
 import styles from './page.module.scss';
 import { LanguageContext } from '../context/languageContext';
 import { validateIban } from '@/app/actions'
@@ -35,12 +35,30 @@ const payerAccounts: Payer[] = [
     }
 ];
 
+const defaultValues = {
+    amount: 0.01,
+    payeeAccount: '',
+    purpose: '',
+    payee: '',
+    payerAccount: ''
+};
+
 const Transfer: React.FC = () => {
     const language = useContext(LanguageContext);
 
-    const { handleSubmit, control, reset } = useForm<IFormInput>();
+    const { handleSubmit, control, reset } = useForm<IFormInput>({ defaultValues });
+    const [form] = Form.useForm();// Check how to reset
 
-    const onSubmit: SubmitHandler<IFormInput> = (data) => console.log(data)
+    const onSubmit: SubmitHandler<IFormInput> = (data) => {
+        console.log(data);
+        reset({
+            amount: 0.01,
+            payee: '',
+            payeeAccount: '',
+            purpose: '',
+            payerAccount: ''
+        });
+    }
 
     const [activeAccount, setActiveAccount] = useState<Payer | null>(null)
 
@@ -61,7 +79,7 @@ const Transfer: React.FC = () => {
                 payerAccount: ''
             });
         }
-    }, [reset, setActiveAccount]);
+    }, [reset, setActiveAccount, form]);
 
     const balance = useMemo(() => {
         if (activeAccount) {
@@ -85,46 +103,70 @@ const Transfer: React.FC = () => {
                 {invalidAccount ? <Alert message="There is no active account or Your balance is low" type="error" /> : null}
             </Space>
 
-            <Form className={styles.form} layout="vertical" onFinish={handleSubmit(onSubmit)} disabled={invalidAccount} initialValues={{
-                amount: 0.01,
-                payee: '',
-                payeeAccount: '',
-                purpose: '',
-                payerAccount: ''
-            }}>
-                <Form.Item hasFeedback label="Amount" name="amount" rules={[{ required: true, type: 'number', min: 0.01, max: activeAccount?.balance }]}>
-                    <InputNumber
-                        style={{ width: 200 }}
-                        defaultValue={0.01}
-                        parser={(value) => {
-                            if (!value) return 0.01;
-                            return language === 'lt' ? parseFloat(value.replace(',', '.')) : parseFloat(value.replace('.', ','));
-                        }}
-                        formatter={(value) => {
-                            if (value && language === 'lt') return new Intl.NumberFormat('lt-LT').format(value);
-                            if (value && language === 'en') return new Intl.NumberFormat('en-US').format(value);
-                            return '';
-                        }}
-                    />
-                </Form.Item>
-                <Form.Item hasFeedback label="Purpose" name="purpose" rules={[{ required: true, min: 3, max: 135 }]}>
-                    <Input />
-                </Form.Item>
-                <Form.Item hasFeedback label="Payee Account" name="payeeAccount" rules={[{
-                    required: true, validator: (_rule, value, cb) => {
-                        if (!value) cb("IBAN is a mandatory field");
-                        if (value.length < 15) cb("IBAN should not be less than 15 symbols");
-                        validateIban(value).then((data) => data ? cb(data) : cb());
-                    },
-                }]}>
-                    <Input />
-                </Form.Item>
-                <Form.Item hasFeedback label="Payee" name="payee" rules={[{ required: true, min: 3, max: 70 }]}>
-                    <Input />
-                </Form.Item>
-                <Form.Item hasFeedback label="Payer Account">
-                    <Input size='large' placeholder="Payer" disabled value={activeAccount?.iban} addonAfter={balance} />
-                </Form.Item>
+            <Form className={styles.form} layout="vertical" onFinish={handleSubmit(onSubmit)} disabled={invalidAccount} initialValues={defaultValues}>
+                <Controller
+                    name="amount"
+                    control={control}
+                    render={({ field }) => <Form.Item hasFeedback label="Amount" name="amount" rules={[{ required: true, type: 'number', min: 0.01, max: activeAccount?.balance }]}>
+                        <InputNumber
+                            {...field}
+                            style={{ width: 200 }}
+                            parser={(value) => {
+                                if (!value) return 0.01;
+                                return language === 'lt' ? parseFloat(value.replace(',', '.')) : parseFloat(value.replace('.', ','));
+                            }}
+                            formatter={(value) => {
+                                if (value && language === 'lt') return new Intl.NumberFormat('lt-LT').format(value);
+                                if (value && language === 'en') return new Intl.NumberFormat('en-US').format(value);
+                                return '';
+                            }}
+                        />
+                    </Form.Item>}
+                />
+
+                <Controller
+                    name="purpose"
+                    control={control}
+                    render={({ field }) => <Form.Item
+                        hasFeedback
+                        label="Purpose"
+                        name="purpose"
+                        rules={[{ required: true, min: 3, max: 135 }]}
+                    >
+                        <Input {...field} />
+                    </Form.Item>}
+                />
+
+                <Controller
+                    name="payeeAccount"
+                    control={control}
+                    render={({ field }) => <Form.Item hasFeedback label="Payee Account" name="payeeAccount" rules={[{
+                        required: true, validator: (_rule, value, cb) => {
+                            if (!value) cb("IBAN is a mandatory field");
+                            if (value.length < 15) cb("IBAN should not be less than 15 symbols");
+                            validateIban(value).then((data) => data ? cb(data) : cb());
+                        },
+                    }]}>
+                        <Input {...field} />
+                    </Form.Item>}
+                />
+
+                <Controller
+                    name="payee"
+                    control={control}
+                    render={({ field }) => <Form.Item hasFeedback label="Payee" name="payee" rules={[{ required: true, min: 3, max: 70 }]}>
+                        <Input {...field} />
+                    </Form.Item>}
+                />
+
+                <Controller
+                    name="payerAccount"
+                    control={control}
+                    render={({ field }) => <Form.Item hasFeedback label="Payer Account">
+                        <Input size='large' placeholder="Payer" disabled value={activeAccount?.iban} addonAfter={balance} />
+                    </Form.Item>}
+                />
+
                 <Button type="primary" htmlType="submit">
                     Submit
                 </Button>
