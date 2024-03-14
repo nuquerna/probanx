@@ -46,18 +46,15 @@ const defaultValues = {
 const Transfer: React.FC = () => {
     const language = useContext(LanguageContext);
 
-    const { handleSubmit, control, reset } = useForm<IFormInput>({ defaultValues });
-    const [form] = Form.useForm();// Check how to reset
+    const [completedData, setCompletedData] = useState<IFormInput | null>(null);
+    const { handleSubmit, control, reset, setValue } = useForm<IFormInput>({ defaultValues });
+    const [form] = Form.useForm();
 
-    const onSubmit: SubmitHandler<IFormInput> = (data) => {
-        console.log(data);
-        reset({
-            amount: 0.01,
-            payee: '',
-            payeeAccount: '',
-            purpose: '',
-            payerAccount: ''
-        });
+    const onSubmit: SubmitHandler<IFormInput> = (data: IFormInput) => {
+        setCompletedData(data);
+        reset(defaultValues);
+        form.resetFields();
+        setTimeout(() => setCompletedData(null), 5000);
     }
 
     const [activeAccount, setActiveAccount] = useState<Payer | null>(null)
@@ -71,15 +68,9 @@ const Transfer: React.FC = () => {
         const payer = payerAccounts.find((p) => p.id === value)
         if (payer) {
             setActiveAccount(payer);
-            reset({
-                amount: 0.01,
-                payee: '',
-                payeeAccount: '',
-                purpose: '',
-                payerAccount: ''
-            });
+            setValue('payerAccount', payer.iban, { shouldValidate: false })
         }
-    }, [reset, setActiveAccount, form]);
+    }, [reset, setActiveAccount]);
 
     const balance = useMemo(() => {
         if (activeAccount) {
@@ -103,7 +94,7 @@ const Transfer: React.FC = () => {
                 {invalidAccount ? <Alert message="There is no active account or Your balance is low" type="error" /> : null}
             </Space>
 
-            <Form className={styles.form} layout="vertical" onFinish={handleSubmit(onSubmit)} disabled={invalidAccount} initialValues={defaultValues}>
+            <Form className={styles.form} layout="vertical" form={form} onFinish={handleSubmit(onSubmit)} disabled={invalidAccount} initialValues={defaultValues}>
                 <Controller
                     name="amount"
                     control={control}
@@ -162,15 +153,23 @@ const Transfer: React.FC = () => {
                 <Controller
                     name="payerAccount"
                     control={control}
-                    render={({ field }) => <Form.Item hasFeedback label="Payer Account">
-                        <Input size='large' placeholder="Payer" disabled value={activeAccount?.iban} addonAfter={balance} />
-                    </Form.Item>}
+                    render={({ field }) =>
+                        <Form.Item hasFeedback label="Payer Account">
+                            <Input {...field} size='large' placeholder="Payer" disabled addonAfter={balance} />
+                        </Form.Item>
+                    }
                 />
 
                 <Button type="primary" htmlType="submit">
                     Submit
                 </Button>
             </Form>
+            {completedData ? <Alert
+                message="Success Transfer"
+                description={JSON.stringify(completedData)}
+                type="success"
+                showIcon
+            /> : null}
         </Flex >
     );
 }

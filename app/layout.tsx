@@ -1,5 +1,5 @@
 'use client'
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -7,7 +7,6 @@ import "./globals.css";
 import Link from 'next/link'
 import {
   DesktopOutlined,
-  GlobalOutlined,
   InteractionOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
@@ -47,8 +46,14 @@ export default function RootLayout({
 }>) {
   const [format, setFormat] = useState('lt');
 
+
   return (
     <html lang="en">
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>PROBANX</title>
+      </head>
       <body className={inter.className}>
         <Layout style={{ minHeight: '100vh' }}>
           <Sider>
