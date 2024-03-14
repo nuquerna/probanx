@@ -7,7 +7,7 @@ import styles from './page.module.scss';
 import { LanguageContext } from '../context/languageContext';
 import { validateIban } from '../actions'
 
-type Payer = { iban: string, id: string, balance: number }
+type Payer = { iban: string, id: string, balance: number };
 
 interface IFormInput {
     amount: number;

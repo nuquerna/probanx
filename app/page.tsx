@@ -1,3 +1,4 @@
+import React from 'react';
 import { Descriptions, DescriptionsProps } from "antd";
 import styles from "./page.module.css";
 
@@ -29,7 +30,7 @@ const items: DescriptionsProps['items'] = [
   },
 ];
 
-export default function Home() {
+const Home: React.FC = () => {
   return (
     <main className={styles.main}>
       <div className={styles.description}>
@@ -38,3 +39,5 @@ export default function Home() {
     </main>
   );
 }
+
+export default Home;
