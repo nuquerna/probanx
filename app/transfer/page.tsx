@@ -70,7 +70,7 @@ const Transfer: React.FC = () => {
             setActiveAccount(payer);
             setValue('payerAccount', payer.iban, { shouldValidate: false })
         }
-    }, [reset, setActiveAccount, setValue]);
+    }, [setActiveAccount, setValue]);
 
     const balance = useMemo(() => {
         if (activeAccount) {
