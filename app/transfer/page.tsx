@@ -5,7 +5,7 @@ import { Button, Form, Input, Select, Space, Flex, InputNumber, Alert } from 'an
 import { SubmitHandler, useForm, Controller } from "react-hook-form";
 import styles from './page.module.scss';
 import { LanguageContext } from '../context/languageContext';
-import { validateIban } from '@/app/actions'
+import { validateIban } from '../actions'
 
 type Payer = { iban: string, id: string, balance: number }
 
